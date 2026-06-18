@@ -116,24 +116,23 @@
         divResultado.style.display = "block";
         divResultado.style.backgroundColor = "#e2e3e5";
         divResultado.style.color = "#383d41";
-        divResultado.innerHTML = "Verificando credenciales en VEKY...";
+        divResultado.innerHTML = "Consultando base de datos VEKY en tiempo real...";
 
-        const URL_API_VEKY = "https://script.google.com/macros/s/AKfycbykq7yXT3_gbh4Efu0V3xF3XeLPdb1FvaSqYbflzWW-sOkqX_wxZF-V5pLdVDDeAT_bpA/exec";
+        // Pega aquí la nueva URL de la Web App de Apps Script que copiaste en el paso anterior
+        const URL_API_VEKY = "https://script.google.com/macros/s/AKfycbx6ORnQzXrGQAnGXskHkACKjbgzb0RChJH3Ib5OUilZ50OY0JBTo4ipYxw2y0x7v8X_vA/exec";
 
-        // Envío real a la Web App
+        // Conexión real interactiva
         fetch(URL_API_VEKY, {
             method: "POST",
-            mode: "no-cors",
-            headers: { "Content-Type": "application/json" },
+            headers: {
+                "Content-Type": "text/plain;charset=utf-8"
+            },
             body: JSON.stringify({ codigo: codigo })
-        });
-
-        // Corrección de guiones bajos o errores de formato comunes al leer
-        var codigoLinter = codigo.toString().trim().toUpperCase().replace("_", "-");
-        var codigosValidos = ["CTR-PELJ-964", "STE-RORA-320", "TSM-GOSM-140", "LOT-GOME-642"];
-
-        setTimeout(function() {
-            if (codigosValidos.includes(codigoLinter)) {
+        })
+        .then(response => response.json()) 
+        .then(data => {
+            // El resultado depende al 100% de lo que decida tu Sheets
+            if (data.encontrado === true) {
                 divResultado.style.backgroundColor = "#d4edda";
                 divResultado.style.color = "#155724";
                 divResultado.innerHTML = "¡ACCESO CONCEDIDO! Bienvenido a Veky. Abriendo portón...";
@@ -141,9 +140,15 @@
             } else {
                 divResultado.style.backgroundColor = "#f8d7da";
                 divResultado.style.color = "#721c24";
-                divResultado.innerHTML = "¡ACCESO DENEGADO! Código falso o no registrado: " + codigoLinter;
+                divResultado.innerHTML = data.mensaje || "¡ACCESO DENEGADO! Código no registrado.";
             }
-        }, 1200);
+        })
+        .catch(error => {
+            console.error("Error:", error);
+            divResultado.style.backgroundColor = "#fff3cd";
+            divResultado.style.color = "#856404";
+            divResultado.innerHTML = "Error al intentar contactar con el servidor central de VEKY.";
+        });
     }
 
     function encenderCamara() {
@@ -156,8 +161,6 @@
 
         html5QrcodeScanner = new Html5Qrcode("lector-qr");
         
-        // CONFIGURACIÓN ULTRA-SENSIBLE: Escanea 25 veces por segundo en lugar de 10
-        // y habilitamos el escaneo de área completa para que no falle por el recuadro
         html5QrcodeScanner.start(
             { facingMode: "environment" },
             { 
@@ -173,9 +176,8 @@
                 document.getElementById("codigoInput").value = textoQr;
                 enviarAlSheets();
             },
-            (error) => { /* Silencioso */ }
+            (error) => { /* Continuo */ }
         ).catch((err) => {
-            console.error(err);
             alert("No se pudo acceder a la cámara.");
             document.getElementById("btnEncender").style.display = "block";
             document.getElementById("btnApagar").style.display = "none";
