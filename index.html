@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f4f6f9;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+    .contenedor {
+      background: white;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+      text-align: center;
+      max-width: 400px;
+      width: 100%;
+    }
+    h2 { color: #333; margin-bottom: 20px; }
+    input[type="text"] {
+      width: 85%;
+      padding: 10px;
+      margin-bottom: 15px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 16px;
+      text-align: center;
+    }
+    button {
+      background-color: #007bff;
+      color: white;
+      border: none;
+      padding: 12px 20px;
+      font-size: 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      width: 90%;
+      margin-bottom: 10px;
+      transition: background 0.3s;
+    }
+    button:hover { background-color: #0056b3; }
+    .btn-secundario { background-color: #28a745; }
+    .btn-secundario:hover { background-color: #218838; }
+    #lector-qr {
+      width: 100%;
+      margin: 15px 0;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    #resultado {
+      margin-top: 20px;
+      padding: 12px;
+      border-radius: 6px;
+      font-weight: bold;
+      display: none;
+    }
+    .exito { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+    .error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+  </style>
+</head>
+<body>
+
+<div class="contenedor">
+  <h2>Portón Inteligente VEKY</h2>
+  
+  <input type="text" id="codigoInput" placeholder="Escribe el código de acceso manualmente">
+  <button onclick="enviarAlSheets()">Verificar Código PIN</button>
+  
+  <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
+  
+  <button class="btn-secundario" onclick="encenderCamara()">📷 Escanear con Cámara</button>
+  <input type="file" id="archivoQr" accept="image/*" style="display:none" onchange="escanearArchivo(this)">
+  <button style="background-color: #6c757d;" onclick="document.getElementById('archivoQr').click()">🖼️ Subir Foto de QR</button>
+  
+  <div id="lector-qr"></div>
+
+  <div id="resultado"></div>
+</div>
+
+<script>
+  let html5QrcodeScanner;
+
+  // 1. VERIFICACIÓN MANUAL O CUANDO EL QR SE DETECTA
+  function enviarAlSheets() {
+    var codigo = document.getElementById("codigoInput").value;
+    var divResultado = document.getElementById("resultado");
+    
+    if(!codigo) {
+      mostrarMensaje("Por favor, escribe o escanea un código.", false);
+      return;
+    }
+    
+    divResultado.style.display = "block";
+    divResultado.className = "";
+    divResultado.innerHTML = "Verificando en la base de datos de VEKY...";
+    divResultado.style.backgroundColor = "#e2e3e5";
+    divResultado.style.color = "#383d41";
+
+    google.script.run
+      .withSuccessHandler(function(respuesta) {
+        mostrarMensaje(respuesta.mensaje, respuesta.encontrado);
+        if(respuesta.encontrado && html5QrcodeScanner) {
+          html5QrcodeScanner.stop(); // Apaga la cámara si ya entró
+        }
+      })
+      .withFailureHandler(function(err) {
+        mostrarMensaje("Error al conectar con el servidor.", false);
+      })
+      .verificarCodigo(codigo);
+  }
+
+  function mostrarMensaje(mensaje, esValido) {
+    var divResultado = document.getElementById("resultado");
+    divResultado.style.display = "block";
+    divResultado.innerHTML = mensaje;
+    divResultado.className = esValido ? "exito" : "error";
+  }
+
+  // 2. MAGIA DE LA CÁMARA EN TIEMPO REAL
+  function encenderCamara() {
+    html5QrcodeScanner = new Html5Qrcode("lector-qr");
+    const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+    
+    html5QrcodeScanner.start(
+      { facingMode: "environment" }, // Usa la cámara trasera del cel si existe
+      config,
+      (textoQr) => {
+        // Si detecta un QR con éxito:
+        document.getElementById("codigoInput").value = textoQr;
+        enviarAlSheets(); // Lo manda a verificar solito
+      },
+      (error) => { /* Silencioso mientras busca */ }
+    ).catch((err) => {
+      alert("No se pudo abrir la cámara. Revisa los permisos.");
+    });
+  }
+
+  // 3. MAGIA DE SUBIR FOTO DESDE GALERÍA
+  function escanearArchivo(input) {
+    if (input.files.length === 0) return;
+    
+    const archivoImagen = input.files[0];
+    const html5QrCode = new Html5Qrcode("lector-qr");
+    
+    html5QrCode.scanFile(archivoImagen, true)
+      .then(textoQr => {
+        document.getElementById("codigoInput").value = textoQr;
+        enviarAlSheets(); // Lo manda a verificar solito
+      })
+      .catch(err => {
+        mostrarMensaje("No se detectó ningún código QR válido en la imagen.", false);
+      });
+  }
+</script>
+
+</body>
+</html>
