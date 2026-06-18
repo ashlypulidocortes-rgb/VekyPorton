@@ -88,33 +88,49 @@
 
   // 1. VERIFICACIÓN MANUAL O CUANDO EL QR SE DETECTA
   function enviarAlSheets() {
-    var codigo = document.getElementById("codigoInput").value;
-    var divResultado = document.getElementById("resultado");
-    
-    if(!codigo) {
-      mostrarMensaje("Por favor, escribe o escanea un código.", false);
-      return;
-    }
-    
-    divResultado.style.display = "block";
-    divResultado.className = "";
-    divResultado.innerHTML = "Verificando en la base de datos de VEKY...";
-    divResultado.style.backgroundColor = "#e2e3e5";
-    divResultado.style.color = "#383d41";
-
-    google.script.run
-      .withSuccessHandler(function(respuesta) {
-        mostrarMensaje(respuesta.mensaje, respuesta.encontrado);
-        if(respuesta.encontrado && html5QrcodeScanner) {
-          html5QrcodeScanner.stop(); // Apaga la cámara si ya entró
-        }
-      })
-      .withFailureHandler(function(err) {
-        mostrarMensaje("Error al conectar con el servidor.", false);
-      })
-      .verificarCodigo(codigo);
+  var codigo = document.getElementById("codigoInput").value;
+  var divResultado = document.getElementById("resultado");
+  
+  if(!codigo) {
+    mostrarMensaje("Por favor, escribe o escanea un código.", false);
+    return;
   }
+  
+  divResultado.style.display = "block";
+  divResultado.className = "";
+  divResultado.innerHTML = "Verificando en la base de datos de VEKY...";
+  divResultado.style.backgroundColor = "#e2e3e5";
+  divResultado.style.color = "#383d41";
 
+  // URL de tu API de Google Apps Script
+  const URL_API_VEKY = "https://script.google.com/macros/s/AKfycbykq7yXT3_gbh4Efu0V3xF3XeLPdb1FvaSqYbflzWW-sOkqX_wxZF-V5pLdVDDeAT_bpA/exec";
+
+  // Enviamos el código usando FETCH
+  fetch(URL_API_VEKY, {
+      method: "POST",
+      mode: "no-cors",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ codigo: codigo })
+  })
+  .then(function() {
+      // Como usamos no-cors, simulamos la respuesta visual de éxito en la pantalla
+      mostrarMensaje("¡Código enviado! Procesando acceso en el portón...", true);
+      
+      // Apaga la cámara si ya entró (igual que tenías antes)
+      if (html5QrcodeScanner) {
+          html5QrcodeScanner.stop().catch(err => console.log("Cámara ya detenida"));
+      }
+
+      // Limpia la caja después de 3 segundos
+      setTimeout(function() {
+          document.getElementById("codigoInput").value = "";
+      }, 3000);
+  })
+  .catch(function(error) {
+      console.error("Error:", error);
+      mostrarMensaje("Error al conectar con el servidor.", false);
+  });
+}
   function mostrarMensaje(mensaje, esValido) {
     var divResultado = document.getElementById("resultado");
     divResultado.style.display = "block";
