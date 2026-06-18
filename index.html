@@ -85,7 +85,7 @@
     
     <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
     
-    <button class="btn-success" onclick="encenderCamara()">📷 Escaneas con Cámara</button>
+    <button class="btn-success" onclick="encenderCamara()">📷 Escanear con Cámara</button>
     <button class="btn-secondary" onclick="document.getElementById('fileInput').click()">🖼️ Subir Foto de QR</button>
     <input type="file" id="fileInput" accept="image/*" style="display:none" onchange="escanearArchivo(this)">
     
@@ -97,26 +97,23 @@
 <script>
     let html5QrcodeScanner;
 
-    // 1. FUNCIÓN PRINCIPAL DE VERIFICACIÓN
     function enviarAlSheets() {
         var codigo = document.getElementById("codigoInput").value;
         var divResultado = document.getElementById("resultado");
         
         if(!codigo) {
-            mostrarMensaje("Por favor, escribe o escanea un código.", false);
+            alert("Por favor, escribe o escanea un código.");
             return;
         }
         
         divResultado.style.display = "block";
-        divResultado.className = "";
-        divResultado.innerHTML = "Verificando credenciales en VEKY...";
         divResultado.style.backgroundColor = "#e2e3e5";
         divResultado.style.color = "#383d41";
+        divResultado.innerHTML = "Verificando credenciales en VEKY...";
 
-        // URL de tu API para enviar el registro a Google Sheets
         const URL_API_VEKY = "https://script.google.com/macros/s/AKfycbykq7yXT3_gbh4Efu0V3xF3XeLPdb1FvaSqYbflzWW-sOkqX_wxZF-V5pLdVDDeAT_bpA/exec";
 
-        // Enviamos el código en segundo plano
+        // Envío en segundo plano
         fetch(URL_API_VEKY, {
             method: "POST",
             mode: "no-cors",
@@ -124,39 +121,27 @@
             body: JSON.stringify({ codigo: codigo })
         });
 
-        // Validación visual instantánea
+        // Simulación visual inmediata basada en tus datos reales
         var codigoLinter = codigo.toString().trim().toUpperCase();
         var codigosValidos = ["CTR-PELJ-964", "STE-RORA-320", "TSM-GOSM-140"];
 
         setTimeout(function() {
             if (codigosValidos.includes(codigoLinter)) {
-                mostrarMensaje("¡ACCESO CONCEDIDO! Bienvenido a Veky. Abriendo portón...", true);
                 divResultado.style.backgroundColor = "#d4edda";
                 divResultado.style.color = "#155724";
+                divResultado.innerHTML = "¡ACCESO CONCEDIDO! Bienvenido a Veky. Abriendo portón...";
             } else {
-                mostrarMensaje("¡ACCESO DENEGADO! Código falso o no registrado.", false);
                 divResultado.style.backgroundColor = "#f8d7da";
                 divResultado.style.color = "#721c24";
+                divResultado.innerHTML = "¡ACCESO DENEGADO! Código falso o no registrado.";
             }
 
             if (html5QrcodeScanner) {
-                html5QrcodeScanner.stop().catch(err => console.log("Cámara ya detenida"));
+                html5QrcodeScanner.stop().catch(err => console.log("Cámara detenida"));
             }
-
-            setTimeout(function() {
-                document.getElementById("codigoInput").value = "";
-            }, 4000);
         }, 1500);
     }
 
-    function mostrarMensaje(mensaje, esValido) {
-        var divResultado = document.getElementById("resultado");
-        divResultado.style.display = "block";
-        divResultado.innerHTML = mensaje;
-        divResultado.className = esValido ? "exito" : "error";
-    }
-
-    // 2. MAGIA DE LA CÁMARA EN TIEMPO REAL
     function encenderCamara() {
         if (html5QrcodeScanner) {
             html5QrcodeScanner.stop().then(() => { ActivarLector(); }).catch(() => { ActivarLector(); });
@@ -167,11 +152,9 @@
 
     function ActivarLector() {
         html5QrcodeScanner = new Html5Qrcode("lector-qr");
-        const config = { fps: 10, qrbox: { width: 250, height: 250 } };
-        
         html5QrcodeScanner.start(
             { facingMode: "environment" },
-            config,
+            { fps: 10, qrbox: { width: 250, height: 250 } },
             (textoQr) => {
                 document.getElementById("codigoInput").value = textoQr;
                 enviarAlSheets();
@@ -182,10 +165,8 @@
         });
     }
 
-    // 3. MAGIA DE SUBIR FOTO DESDE GALERÍA
     function escanearArchivo(input) {
         if (input.files.length === 0) return;
-        
         const archivoImagen = input.files[0];
         const html5QrCode = new Html5Qrcode("lector-qr");
         
@@ -195,10 +176,11 @@
             enviarAlSheets();
         })
         .catch(err => {
-            mostrarMensaje("No se detectó ningún código QR válido en la imagen.", false);
             var divResultado = document.getElementById("resultado");
+            divResultado.style.display = "block";
             divResultado.style.backgroundColor = "#f8d7da";
             divResultado.style.color = "#721c24";
+            divResultado.innerHTML = "No se detectó ningún código QR válido en la imagen.";
         });
     }
 </script>
