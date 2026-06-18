@@ -1,209 +1,206 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <base target="_top">
-  <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
-  <style>
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background-color: #f4f6f9;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      margin: 0;
-    }
-    .contenedor {
-      background: white;
-      padding: 30px;
-      border-radius: 12px;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-      text-align: center;
-      max-width: 400px;
-      width: 100%;
-    }
-    h2 { color: #333; margin-bottom: 20px; }
-    input[type="text"] {
-      width: 85%;
-      padding: 10px;
-      margin-bottom: 15px;
-      border: 1px solid #ccc;
-      border-radius: 6px;
-      font-size: 16px;
-      text-align: center;
-    }
-    button {
-      background-color: #007bff;
-      color: white;
-      border: none;
-      padding: 12px 20px;
-      font-size: 16px;
-      border-radius: 6px;
-      cursor: pointer;
-      width: 90%;
-      margin-bottom: 10px;
-      transition: background 0.3s;
-    }
-    button:hover { background-color: #0056b3; }
-    .btn-secundario { background-color: #28a745; }
-    .btn-secundario:hover { background-color: #218838; }
-    #lector-qr {
-      width: 100%;
-      margin: 15px 0;
-      border-radius: 8px;
-      overflow: hidden;
-    }
-    #resultado {
-      margin-top: 20px;
-      padding: 12px;
-      border-radius: 6px;
-      font-weight: bold;
-      display: none;
-    }
-    .exito { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
-    .error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
-  </style>
+    <base target="_top">
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f6f9;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .contenedor {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            text-align: center;
+            width: 90%;
+            max-width: 400px;
+        }
+        h2 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            box-sizing: border-box;
+            font-size: 16px;
+            text-align: center;
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-bottom: 15px;
+            transition: background 0.3s;
+        }
+        .btn-primary {
+            background-color: #0069d9;
+            color: white;
+        }
+        .btn-success {
+            background-color: #28a745;
+            color: white;
+        }
+        .btn-secondary {
+            background-color: #6c757d;
+            color: white;
+        }
+        #lector-qr {
+            width: 100%;
+            margin-top: 15px;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        #resultado {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 6px;
+            font-weight: bold;
+            display: none;
+            font-size: 15px;
+        }
+    </style>
 </head>
 <body>
 
 <div class="contenedor">
-  <h2>Portón Inteligente VEKY</h2>
-  
-  <input type="text" id="codigoInput" placeholder="Escribe el código de acceso manualmente">
-  <button onclick="enviarAlSheets()">Verificar Código PIN</button>
-  
-  <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
-  
-  <button class="btn-secundario" onclick="encenderCamara()">📷 Escanear con Cámara</button>
-  <input type="file" id="archivoQr" accept="image/*" style="display:none" onchange="escanearArchivo(this)">
-  <button style="background-color: #6c757d;" onclick="document.getElementById('archivoQr').click()">🖼️ Subir Foto de QR</button>
-  
-  <div id="lector-qr"></div>
-
-  <div id="resultado"></div>
+    <h2>Portón Inteligente VEKY</h2>
+    
+    <input type="text" id="codigoInput" placeholder="Escribe el código de acceso manualmente">
+    
+    <button class="btn-primary" onclick="enviarAlSheets()">Verificar Código PIN</button>
+    
+    <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
+    
+    <button class="btn-success" onclick="encenderCamara()">📷 Escaneas con Cámara</button>
+    <button class="btn-secondary" onclick="document.getElementById('fileInput').click()">🖼️ Subir Foto de QR</button>
+    <input type="file" id="fileInput" accept="image/*" style="display:none" onchange="escanearArchivo(this)">
+    
+    <div id="lector-qr"></div>
+    
+    <div id="resultado"></div>
 </div>
 
 <script>
-  let html5QrcodeScanner;
+    let html5QrcodeScanner;
 
-  // 1. VERIFICACIÓN MANUAL O CUANDO EL QR SE DETECTA
- function enviarAlSheets() {
-  var codigo = document.getElementById("codigoInput").value;
-  var divResultado = document.getElementById("resultado");
-  
-  if(!codigo) {
-    mostrarMensaje("Por favor, escribe o escanea un código.", false);
-    return;
-  }
-  
-  divResultado.style.display = "block";
-  divResultado.className = "";
-  divResultado.innerHTML = "Verificando credenciales en VEKY...";
-  divResultado.style.backgroundColor = "#e2e3e5";
-  divResultado.style.color = "#383d41";
+    // 1. FUNCIÓN PRINCIPAL DE VERIFICACIÓN
+    function enviarAlSheets() {
+        var codigo = document.getElementById("codigoInput").value;
+        var divResultado = document.getElementById("resultado");
+        
+        if(!codigo) {
+            mostrarMensaje("Por favor, escribe o escanea un código.", false);
+            return;
+        }
+        
+        divResultado.style.display = "block";
+        divResultado.className = "";
+        divResultado.innerHTML = "Verificando credenciales en VEKY...";
+        divResultado.style.backgroundColor = "#e2e3e5";
+        divResultado.style.color = "#383d41";
 
-  // URL de tu API para que de todos modos se mande el registro a Google
-  const URL_API_VEKY = "https://script.google.com/macros/s/AKfycbykq7yXT3_gbh4Efu0V3xF3XeLPdb1FvaSqYbflzWW-sOkqX_wxZF-V5pLdVDDeAT_bpA/exec";
+        // URL de tu API para enviar el registro a Google Sheets
+        const URL_API_VEKY = "https://script.google.com/macros/s/AKfycbykq7yXT3_gbh4Efu0V3xF3XeLPdb1FvaSqYbflzWW-sOkqX_wxZF-V5pLdVDDeAT_bpA/exec";
 
-  // Enviamos el código en segundo plano a Apps Script
-  fetch(URL_API_VEKY, {
-      method: "POST",
-      mode: "no-cors",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ codigo: codigo })
-  });
+        // Enviamos el código en segundo plano
+        fetch(URL_API_VEKY, {
+            method: "POST",
+            mode: "no-cors",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ codigo: codigo })
+        });
 
-  // --- VALIDACIÓN VISUAL EN TIEMPO REAL ---
-  // Limpiamos el código igual que lo hace tu Apps Script
-  var codigoLinter = codigo.toString().trim().toUpperCase();
+        // Validación visual instantánea
+        var codigoLinter = codigo.toString().trim().toUpperCase();
+        var codigosValidos = ["CTR-PELJ-964", "STE-RORA-320", "TSM-GOSM-140"];
 
-  // Lista de códigos autorizados en tu Hoja 1 de Sheets
-  var codigosValidos = ["CTR-PELJ-964", "STE-RORA-320", "TSM-GOSM-140"];
+        setTimeout(function() {
+            if (codigosValidos.includes(codigoLinter)) {
+                mostrarMensaje("¡ACCESO CONCEDIDO! Bienvenido a Veky. Abriendo portón...", true);
+                divResultado.style.backgroundColor = "#d4edda";
+                divResultado.style.color = "#155724";
+            } else {
+                mostrarMensaje("¡ACCESO DENEGADO! Código falso o no registrado.", false);
+                divResultado.style.backgroundColor = "#f8d7da";
+                divResultado.style.color = "#721c24";
+            }
 
-  setTimeout(function() {
-    if (codigosValidos.includes(codigoLinter)) {
-      // Si el código está en la lista de tu Sheets
-      mostrarMensaje("¡ACCESO CONCEDIDO! Bienvenido a Veky. Abriendo portón...", true);
-      divResultado.style.backgroundColor = "#d4edda";
-      divResultado.style.color = "#155724";
-    } else {
-      // Si es un código cualquiera que no coincide
-      mostrarMensaje("¡ACCESO DENEGADO! Código falso o no registrado.", false);
-      divResultado.style.backgroundColor = "#f8d7da";
-      divResultado.style.color = "#721c24";
+            if (html5QrcodeScanner) {
+                html5QrcodeScanner.stop().catch(err => console.log("Cámara ya detenida"));
+            }
+
+            setTimeout(function() {
+                document.getElementById("codigoInput").value = "";
+            }, 4000);
+        }, 1500);
     }
 
-    // Apaga la cámara tras procesar
-    if (html5QrcodeScanner) {
-        html5QrcodeScanner.stop().catch(err => console.log("Cámara ya detenida"));
+    function mostrarMensaje(mensaje, esValido) {
+        var divResultado = document.getElementById("resultado");
+        divResultado.style.display = "block";
+        divResultado.innerHTML = mensaje;
+        divResultado.className = esValido ? "exito" : "error";
     }
 
-    // Limpia la caja después de 4 segundos para el siguiente vehículo
-    setTimeout(function() {
-        document.getElementById("codigoInput").value = "";
-    }, 4000);
-  }, 1500); // Simulamos 1.5 segundos de espera para que se vea real
-}
-      // Como usamos no-cors, simulamos la respuesta visual de éxito en la pantalla
-      mostrarMensaje("¡Código enviado! Procesando acceso en el portón...", true);
-      
-      // Apaga la cámara si ya entró (igual que tenías antes)
-      if (html5QrcodeScanner) {
-          html5QrcodeScanner.stop().catch(err => console.log("Cámara ya detenida"));
-      }
+    // 2. MAGIA DE LA CÁMARA EN TIEMPO REAL
+    function encenderCamara() {
+        if (html5QrcodeScanner) {
+            html5QrcodeScanner.stop().then(() => { ActivarLector(); }).catch(() => { ActivarLector(); });
+        } else {
+            ActivarLector();
+        }
+    }
 
-      // Limpia la caja después de 3 segundos
-      setTimeout(function() {
-          document.getElementById("codigoInput").value = "";
-      }, 3000);
-  })
-  .catch(function(error) {
-      console.error("Error:", error);
-      mostrarMensaje("Error al conectar con el servidor.", false);
-  });
-}
-  function mostrarMensaje(mensaje, esValido) {
-    var divResultado = document.getElementById("resultado");
-    divResultado.style.display = "block";
-    divResultado.innerHTML = mensaje;
-    divResultado.className = esValido ? "exito" : "error";
-  }
+    function ActivarLector() {
+        html5QrcodeScanner = new Html5Qrcode("lector-qr");
+        const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+        
+        html5QrcodeScanner.start(
+            { facingMode: "environment" },
+            config,
+            (textoQr) => {
+                document.getElementById("codigoInput").value = textoQr;
+                enviarAlSheets();
+            },
+            (error) => { /* Silencioso */ }
+        ).catch((err) => {
+            alert("No se pudo abrir la cámara. Revisa los permisos.");
+        });
+    }
 
-  // 2. MAGIA DE LA CÁMARA EN TIEMPO REAL
-  function encenderCamara() {
-    html5QrcodeScanner = new Html5Qrcode("lector-qr");
-    const config = { fps: 10, qrbox: { width: 250, height: 250 } };
-    
-    html5QrcodeScanner.start(
-      { facingMode: "environment" }, // Usa la cámara trasera del cel si existe
-      config,
-      (textoQr) => {
-        // Si detecta un QR con éxito:
-        document.getElementById("codigoInput").value = textoQr;
-        enviarAlSheets(); // Lo manda a verificar solito
-      },
-      (error) => { /* Silencioso mientras busca */ }
-    ).catch((err) => {
-      alert("No se pudo abrir la cámara. Revisa los permisos.");
-    });
-  }
-
-  // 3. MAGIA DE SUBIR FOTO DESDE GALERÍA
-  function escanearArchivo(input) {
-    if (input.files.length === 0) return;
-    
-    const archivoImagen = input.files[0];
-    const html5QrCode = new Html5Qrcode("lector-qr");
-    
-    html5QrCode.scanFile(archivoImagen, true)
-      .then(textoQr => {
-        document.getElementById("codigoInput").value = textoQr;
-        enviarAlSheets(); // Lo manda a verificar solito
-      })
-      .catch(err => {
-        mostrarMensaje("No se detectó ningún código QR válido en la imagen.", false);
-      });
-  }
+    // 3. MAGIA DE SUBIR FOTO DESDE GALERÍA
+    function escanearArchivo(input) {
+        if (input.files.length === 0) return;
+        
+        const archivoImagen = input.files[0];
+        const html5QrCode = new Html5Qrcode("lector-qr");
+        
+        html5QrCode.scanFile(archivoImagen, true)
+        .then(textoQr => {
+            document.getElementById("codigoInput").value = textoQr;
+            enviarAlSheets();
+        })
+        .catch(err => {
+            mostrarMensaje("No se detectó ningún código QR válido en la imagen.", false);
+            var divResultado = document.getElementById("resultado");
+            divResultado.style.backgroundColor = "#f8d7da";
+            divResultado.style.color = "#721c24";
+        });
+    }
 </script>
 
 </body>
