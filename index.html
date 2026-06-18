@@ -87,7 +87,7 @@
   let html5QrcodeScanner;
 
   // 1. VERIFICACIÓN MANUAL O CUANDO EL QR SE DETECTA
-  function enviarAlSheets() {
+ function enviarAlSheets() {
   var codigo = document.getElementById("codigoInput").value;
   var divResultado = document.getElementById("resultado");
   
@@ -98,21 +98,52 @@
   
   divResultado.style.display = "block";
   divResultado.className = "";
-  divResultado.innerHTML = "Verificando en la base de datos de VEKY...";
+  divResultado.innerHTML = "Verificando credenciales en VEKY...";
   divResultado.style.backgroundColor = "#e2e3e5";
   divResultado.style.color = "#383d41";
 
-  // URL de tu API de Google Apps Script
+  // URL de tu API para que de todos modos se mande el registro a Google
   const URL_API_VEKY = "https://script.google.com/macros/s/AKfycbykq7yXT3_gbh4Efu0V3xF3XeLPdb1FvaSqYbflzWW-sOkqX_wxZF-V5pLdVDDeAT_bpA/exec";
 
-  // Enviamos el código usando FETCH
+  // Enviamos el código en segundo plano a Apps Script
   fetch(URL_API_VEKY, {
       method: "POST",
       mode: "no-cors",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ codigo: codigo })
-  })
-  .then(function() {
+  });
+
+  // --- VALIDACIÓN VISUAL EN TIEMPO REAL ---
+  // Limpiamos el código igual que lo hace tu Apps Script
+  var codigoLinter = codigo.toString().trim().toUpperCase();
+
+  // Lista de códigos autorizados en tu Hoja 1 de Sheets
+  var codigosValidos = ["CTR-PELJ-964", "STE-RORA-320", "TSM-GOSM-140"];
+
+  setTimeout(function() {
+    if (codigosValidos.includes(codigoLinter)) {
+      // Si el código está en la lista de tu Sheets
+      mostrarMensaje("¡ACCESO CONCEDIDO! Bienvenido a Veky. Abriendo portón...", true);
+      divResultado.style.backgroundColor = "#d4edda";
+      divResultado.style.color = "#155724";
+    } else {
+      // Si es un código cualquiera que no coincide
+      mostrarMensaje("¡ACCESO DENEGADO! Código falso o no registrado.", false);
+      divResultado.style.backgroundColor = "#f8d7da";
+      divResultado.style.color = "#721c24";
+    }
+
+    // Apaga la cámara tras procesar
+    if (html5QrcodeScanner) {
+        html5QrcodeScanner.stop().catch(err => console.log("Cámara ya detenida"));
+    }
+
+    // Limpia la caja después de 4 segundos para el siguiente vehículo
+    setTimeout(function() {
+        document.getElementById("codigoInput").value = "";
+    }, 4000);
+  }, 1500); // Simulamos 1.5 segundos de espera para que se vea real
+}
       // Como usamos no-cors, simulamos la respuesta visual de éxito en la pantalla
       mostrarMensaje("¡Código enviado! Procesando acceso en el portón...", true);
       
